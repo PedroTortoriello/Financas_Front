@@ -328,6 +328,10 @@
     .button-box {
         width: 80%; /* Reduz a largura da caixa de botões */
     }
+
+    .img{
+        ;
+    }
 }
 
 /* Estilos para telas menores que 576px (por exemplo, iPhones em modo paisagem) */

@@ -9,7 +9,8 @@ import Button from './Button';
 import Image from './Image';
 import './StyleLogin.css';
 import { Link, useNavigate } from 'react-router-dom';
-import Logo from './Logo.png'
+import Logo from './Logo.png';
+import { useMediaQuery } from 'react-responsive';
 
 type AuthUserFormData = z.infer<typeof AuthUserFormSchema>;
 
@@ -67,14 +68,16 @@ const SignIn: React.FC = () => {
       setLoading(false);
     }
   }  
-  
+
+  const isMobile = useMediaQuery({ maxWidth: 768 });
+
   return (
     <div className="login-page">
       <div className="flex justify-center items-center bg-[#011e36]">
         <div className='boxLeft'>
           <form onSubmit={handleSubmit(AuthUser)}>
-            <div className="boxRight boxRight md:hidden w-50 h-10 items-center justify-center ">
-              <Image imageLink={Logo}  />
+            <div className="boxRight md:hidden w-50 h-10 items-center justify-center ">
+              {!isMobile && <Image imageLink={Logo} />}
             </div>
 
             <div className="input-box">
@@ -132,7 +135,7 @@ const SignIn: React.FC = () => {
         </div>
 
         <div className="boxRight hidden md:block bg-[#011e36]">
-          <Image imageLink={Logo}  />
+          {!isMobile && <Image imageLink={Logo} />}
         </div>
       </div>
     </div>
