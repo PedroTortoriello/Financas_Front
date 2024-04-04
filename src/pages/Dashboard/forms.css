@@ -2,10 +2,7 @@
 #form {
     max-width: 500px;
 }
-#form h2 {
-    margin-top: 0;
-    font-weight: bold;
-}
+
 input {
     width: 100%;
 
