@@ -1,131 +1,178 @@
-import React, { useState, useEffect } from 'react';
-import { MdMailOutline, MdPersonOutline } from "react-icons/md";
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useNavigate } from 'react-router-dom';
 import api from './api';
-import Button from './Button';
-import Image from './Image';
-import { Link, useNavigate } from 'react-router-dom';
-import Logo from './Logo.png'
-import { ResponseMessage } from './ResponseMessage';
-import './StyleSignUp.css';
+import Logo from './Logo.png'; // Substitua pelo caminho correto para a imagem
 
-const UserFormSchema = z.object({
-  email: z.string().email({ message: "O email é inválido" }),
-  password: z.string().min(6, { message: "A senha deve ter pelo menos 6 caracteres" }),
-  confirmpassword: z.string(),
-}).refine(data => data.password === data.confirmpassword, { message: "As senhas não coincidem" });
+const RegisterUserFormSchema = z.object({
+  username: z.string().min(3, { message: "Nome de usuário deve ter no mínimo 3 caracteres" }),
+  email: z.string().email({ message: "E-mail inválido" }),
+  password: z.string().min(6, { message: "A senha deve ter no mínimo 6 caracteres" }),
+});
 
-type SignUpFormData = z.infer<typeof UserFormSchema>;
+type RegisterUserFormData = z.infer<typeof RegisterUserFormSchema>;
 
 const SignUp: React.FC = () => {
   const [loading, setLoading] = useState(false);
-  const [response, setResponse] = useState({
-    message: "",
-    type: "",
+  const [error, setError] = useState("");
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<RegisterUserFormData>({
+    resolver: zodResolver(RegisterUserFormSchema),
   });
 
-  const navigate = useNavigate();
-
-  const { register, handleSubmit, formState: { errors } } = useForm<SignUpFormData>({
-    resolver: zodResolver(UserFormSchema),
-  });
-
-  const onSubmit = async (data: SignUpFormData) => {
+  async function registerUser(data: RegisterUserFormData) {
     setLoading(true);
+
     try {
-      const response = await api.post("/novoUsuario", data, {
+      const headers = {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      localStorage.setItem("token", response.data.token);
-      localStorage.setItem("authenticate", response.data.authenticate);
-    
-      if (response.data.result === "Usuário já existe na base.") {
-        setResponse({ message: response.data.result, type: "error" });
-        setTimeout(() => setResponse({ message: "", type: "" }), 2100);
-      } else {
-        localStorage.setItem("userEmail", data.email);
-        navigate("/Dashboard/ECommerce"); // Redireciona para a página de login após o cadastro bem-sucedido
-      }
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      };
+
+      // Enviar os dados para o back-end
+      const response = await api.post("/newUsers", {
+        email: data.email,
+        password: data.password,
+        userName: data.username, // Mapeia username para userName
+      }, headers);
+
+      const { userId } = response.data;
+
+      // Agora você pode usar o userId conforme necessário
+      console.log("User ID:", userId);
+
     } catch (error) {
-      console.error('Erro ao cadastrar usuário:', (error as Error).message);
-      setResponse({ message: error.message, type: "error" });
+      setError(error.message);
+      setTimeout(() => setError(""), 2100);
     } finally {
       setLoading(false);
     }
-  };
+  }
 
   return (
-    <div className="login-page">
-      <div className="flex justify-center items-center">
-        <div className='boxLeft'>
-          <form onSubmit={handleSubmit(onSubmit)}>
-
-            <div className="input-box">
-              <label htmlFor="email">Email<i>*</i></label>
-              <MdMailOutline id="icon" className="material-icons" />
-              <input
-                className="input"
-                {...register("email")}
-                id="email"
-                type="email"
-                placeholder="Digite seu email"
-              />
-              {errors.email && <p className="error-message">{errors.email.message}</p>}
-            </div>
-
-            <div className="input-box">
-              <label htmlFor="password">Senha<i>*</i></label>
-              <MdPersonOutline id="icon" className="material-icons" />
-              <input
-                className="input"
-                {...register("password")}
-                id="password"
-                type="password"
-                placeholder="Digite sua senha"
-              />
-              {errors.password && <p className="error-message">{errors.password.message}</p>}
-            </div>
-
-            <div className="input-box">
-              <label htmlFor="confirmpassword">Confirmar Senha<i>*</i></label>
-              <MdPersonOutline id="icon" className="material-icons" />
-              <input
-                className="input"
-                {...register("confirmpassword")}
-                id="confirmpassword"
-                type="password"
-                placeholder="Confirme sua senha"
-              />
-              {errors.confirmpassword && <p className="error-message">{errors.confirmpassword.message}</p>}
-            </div>
-
-            {response.message !== "" && (
-              <ResponseMessage message={response.message} type={response.type} />
-            )}
-
-            <div className="button-container">
-              <Button
-                name='button'
-                id='button'
-                type='submit'
-                content={loading ? "Aguarde..." : "Cadastrar"}
-                disabled={loading}
-              />
-            </div>
-
-            <div className="signup-link">
-              <p>Já possui uma conta? <Link to="/login" className='text-[#177357] font-bold'>Faça login</Link></p>
-            </div>
-          </form>
+    <div
+      className="register-page"
+      style={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        height: "100vh",
+        background: "linear-gradient(135deg, #1f2a3c, #0b0e11)",
+        fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+        color: "#fff"
+      }}
+    >
+      <div
+        className="register-form"
+        style={{
+          width: "100%",
+          maxWidth: "400px",
+          padding: "2rem",
+          backgroundColor: "#2a2f3a",
+          borderRadius: "10px",
+          boxShadow: "0 10px 20px rgba(0, 0, 0, 0.2)",
+          animation: "fadeIn 0.5s ease-in-out"
+        }}
+      >
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: "2rem" }}>
+          <img src={Logo} alt="Logo" style={{ maxWidth: "60%", height: "120px"}} />
         </div>
+        <form onSubmit={handleSubmit(registerUser)} style={{ display: "flex", flexDirection: "column" }}>
+          <div className="form-group" style={{ marginBottom: "1.5rem" }}>
+            <label htmlFor="username" style={{ color: "#A0AEC0", marginBottom: "0.5rem" }}>Nome de Usuário</label>
+            <input
+              id="username"
+              type="text"
+              {...register("username")}
+              style={{
+                width: "100%",
+                padding: "0.75rem",
+                borderRadius: "8px",
+                border: "1px solid #3a3f4a",
+                backgroundColor: "#3a3f4a",
+                color: "#fff",
+                outline: "none",
+                transition: "border-color 0.2s"
+              }}
+              onFocus={(e) => e.target.style.borderColor = "#00BFFF"}
+              onBlur={(e) => e.target.style.borderColor = "#3a3f4a"}
+            />
+            {errors.username && <p style={{ color: "#F56565", marginTop: "0.5rem" }}>{errors.username.message}</p>}
+          </div>
 
-        <div className="boxRight hidden md:block">
-          <Image imageLink={Logo}  />
-        </div>
+          <div className="form-group" style={{ marginBottom: "1.5rem" }}>
+            <label htmlFor="email" style={{ color: "#A0AEC0", marginBottom: "0.5rem" }}>E-mail</label>
+            <input
+              id="email"
+              type="email"
+              {...register("email")}
+              style={{
+                width: "100%",
+                padding: "0.75rem",
+                borderRadius: "8px",
+                border: "1px solid #3a3f4a",
+                backgroundColor: "#3a3f4a",
+                color: "#fff",
+                outline: "none",
+                transition: "border-color 0.2s"
+              }}
+              onFocus={(e) => e.target.style.borderColor = "#00BFFF"}
+              onBlur={(e) => e.target.style.borderColor = "#3a3f4a"}
+            />
+            {errors.email && <p style={{ color: "#F56565", marginTop: "0.5rem" }}>{errors.email.message}</p>}
+          </div>
+
+          <div className="form-group" style={{ marginBottom: "1.5rem" }}>
+            <label htmlFor="password" style={{ color: "#A0AEC0", marginBottom: "0.5rem" }}>Senha</label>
+            <input
+              id="password"
+              type="password"
+              {...register("password")}
+              style={{
+                width: "100%",
+                padding: "0.75rem",
+                borderRadius: "8px",
+                border: "1px solid #3a3f4a",
+                backgroundColor: "#3a3f4a",
+                color: "#fff",
+                outline: "none",
+                transition: "border-color 0.2s"
+              }}
+              onFocus={(e) => e.target.style.borderColor = "#00BFFF"}
+              onBlur={(e) => e.target.style.borderColor = "#3a3f4a"}
+            />
+            {errors.password && <p style={{ color: "#F56565", marginTop: "0.5rem" }}>{errors.password.message}</p>}
+          </div>
+
+          {error && <p style={{ color: "#F56565", marginBottom: "1.5rem", textAlign: "center" }}>{error}</p>}
+
+          <button
+            type="submit"
+            style={{
+              width: "100%",
+              padding: "0.75rem",
+              background: "linear-gradient(90deg, #00BFFF, #00A3CC)",
+              color: "white",
+              border: "none",
+              borderRadius: "8px",
+              cursor: "pointer",
+              transition: "background 0.3s"
+            }}
+            onMouseEnter={(e) => e.target.style.background = "linear-gradient(90deg, #00A3CC, #0096BB)"}
+            onMouseLeave={(e) => e.target.style.background = "linear-gradient(90deg, #00BFFF, #00A3CC)"}
+            disabled={loading}
+          >
+            {loading ? "Carregando..." : "Registrar"}
+          </button>
+        </form>
       </div>
     </div>
   );

@@ -1,0 +1,125 @@
+/* Container Principal */
+.settings-container {
+  padding: 60px 20px;
+  max-width: 1000px;
+  margin: 0 auto;
+  background: #f4f7f9;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Título Principal */
+.page-title {
+  font-size: 36px;
+  font-weight: 700;
+  margin-bottom: 40px;
+  color: #34495e;
+  text-align: center;
+}
+
+/* Mensagem de Feedback */
+.message {
+  margin-bottom: 20px;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 16px;
+  text-align: center;
+  background-color: #27ae60;
+  color: #fff;
+}
+
+/* Cartão */
+.card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 30px;
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+  transition: box-shadow 0.3s ease;
+}
+
+.card:hover {
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+}
+
+/* Título do Cartão */
+.card-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #2980b9;
+  padding-bottom: 10px;
+}
+
+/* Grupo de Formulários */
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  font-weight: 500;
+  color: #34495e;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.input-field {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #bdc3c7;
+  font-size: 16px;
+  transition: border-color 0.3s ease;
+}
+
+.input-field:focus {
+  border-color: #2980b9;
+  outline: none;
+}
+
+/* Botões */
+.btn-save {
+  background-color: #2980b9;
+  color: #fff;
+  border: none;
+  padding: 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 18px;
+  transition: background-color 0.3s ease;
+  margin-top: 10px;
+}
+
+.btn-save:hover {
+  background-color: #21618c;
+}
+
+/* Botão de Ação Perigosa */
+.btn-danger {
+  background-color: #e74c3c;
+  color: #fff;
+  border: none;
+  padding: 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 18px;
+  transition: background-color 0.3s ease;
+  margin-top: 10px;
+}
+
+.btn-danger:hover {
+  background-color: #c0392b;
+}
+
+/* Checkbox Label */
+.checkbox-label {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 16px;
+  color: #34495e;
+}
+
+.checkbox-input {
+  margin-right: 10px;
+}

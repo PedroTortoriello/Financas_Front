@@ -1,17 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import DefaultLayout from '../../layout/DefaultLayout';
-import { FaMinus } from "react-icons/fa";
+import { FaEdit, FaMinus, FaPencilAlt, FaPencilRuler } from "react-icons/fa";
 import { MdDelete } from 'react-icons/md';
-import ChartTwo from '../../components/Charts/ChartTwo';
 import api from '../Authentication/api';
 import './toast.css';
 import './forms.css';
+import './date.css';
 import float from './float-plus.svg';
+import DatePicker from 'react-datepicker';
+import DatePicker2 from 'react-datepicker';
+import "react-datepicker/dist/react-datepicker.css";
+import { addMonths, format, startOfYear } from 'date-fns';
 
 const ECommerce: React.FC = () => {
-  const { register, handleSubmit, reset } = useForm();
+  const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState('');
   const [incomeTotal, setIncomeTotal] = useState<number>(0);
   const [expenseTotal, setExpenseTotal] = useState<number>(0);
   const [chartData, setChartData] = useState<{
@@ -23,15 +29,30 @@ const ECommerce: React.FC = () => {
   const [showModal, setShowModal] = useState<boolean>(false);
   const [showExpenseModal, setShowExpenseModal] = useState<boolean>(false);
   const [transactionType, setTransactionType] = useState<string>("");
-  const [userId, setUserId] = useState<string>(""); // Add userId state
+  const [userId, setUserId] = useState<string>(""); 
   const [selectedModalMonth, setSelectedModalMonth] = useState<string>(new Date().toLocaleDateString('en-US', { month: 'long' }));
+  const [showNewCategoryInput, setShowNewCategoryInput] = useState<boolean>(false); // Novo estado para mostrar o input de nova categoria
+  const [total, setTotal] = useState<number>(0); // Novo estado para o total combinado
+  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
+  const [tableDate, setTableDate] = useState<Date | null>(new Date());
 
+  const handleTableDateChange = (date: Date | null) => {
+    if (date) {
+      const month = format(date, "MMMM");
+      setSelectedModalMonth(month);
+      setTableDate(date);
+    }
+  };
   interface Transaction {
-    id: number;
+    id: string;
     description: string;
     amount: number;
-    date: Date; // Change this line to include date property
+    month: string; // Substitua date por month
+    category: string;
+    userId: string;
   }
+  
+
 
   useEffect(() => {
     const fetchTransactions = async () => {
@@ -43,7 +64,7 @@ const ECommerce: React.FC = () => {
           },
         };
   
-        const response = await api.get('/pags2', headers);
+        const response = await api.get('/financas', headers);
         console.log('Dados das transações recebidos:', response.data);
   
         let transactions: Transaction[] = [];
@@ -52,19 +73,20 @@ const ECommerce: React.FC = () => {
           transactions = response.data.map(transaction => ({
             ...transaction,
             amount: parseFloat(transaction.amount),
-            date: new Date(transaction.date)
+            month: transaction.month // Use month em vez de date
           }));
         } else {
           transactions = [{
             ...response.data,
             amount: parseFloat(response.data.amount),
-            date: new Date(response.data.date)
+            month: response.data.month // Use month em vez de date
           }];
         }
   
-        // Filtrar transações pelo mês selecionado
         const filteredTransactions = transactions.filter(transaction => {
-          return transaction.month === selectedModalMonth;
+          const monthMatches = transaction.month === selectedModalMonth;
+          const categoryMatches = selectedCategory ? transaction.category === selectedCategory : true;
+          return monthMatches && categoryMatches;
         });
   
         const totalIncome = filteredTransactions
@@ -75,25 +97,73 @@ const ECommerce: React.FC = () => {
           .filter(transaction => transaction.amount < 0)
           .reduce((acc, transaction) => acc + Math.abs(transaction.amount), 0);
   
+        const total = totalIncome - totalExpense; // Calcular o total combinado
         setIncomeTotal(totalIncome);
         setExpenseTotal(totalExpense);
+        setTotal(total); // Atualizar o total combinado
         setChartData([{ month: selectedModalMonth, totalIncome, totalExpense, transactions: filteredTransactions }]);
+        setTransactions(filteredTransactions);
       } catch (error) {
         console.error('Erro ao buscar transações:', error);
       }
     };
   
     fetchTransactions();
-  }, [selectedModalMonth]);
+  }, [selectedModalMonth, selectedCategory]);
   
-  
-
-  const handleMonthChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedMonth = event.target.value;
-    setSelectedModalMonth(selectedMonth);
+  const monthMapping: { [key: string]: string } = {
+    January: 'Janeiro',
+    February: 'Fevereiro',
+    March: 'Março',
+    April: 'Abril',
+    May: 'Maio',
+    June: 'Junho',
+    July: 'Julho',
+    August: 'Agosto',
+    September: 'Setembro',
+    October: 'Outubro',
+    November: 'Novembro',
+    December: 'Dezembro',
   };
 
+  const monthMapping2: { [key: string]: string } = {
+    January: 'Janeiro',
+    February: 'Fevereiro',
+    March: 'Março',
+    April: 'Abril',
+    May: 'Maio',
+    June: 'Junho',
+    July: 'Julho',
+    August: 'Agosto',
+    September: 'Setembro',
+    October: 'Outubro',
+    November: 'Novembro',
+    December: 'Dezembro',
+  };
+
+  
+  const handleMonthChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedModalMonth(event.target.value);
+  };
+
+  const handleCategoryChange = (e) => {
+    const selectedCategory = e.target.value;
+    if (selectedCategory === 'Outros') {
+      setShowNewCategoryInput(true);
+    } else {
+      setShowNewCategoryInput(false);
+    }
+  };
+
+
   const handleDeleteTransaction = async (id: string) => {
+    console.log('ID da transação a ser excluída:', id); // Adicione esta linha para depuração
+  
+    if (!id) {
+      console.error('ID da transação é indefinido.');
+      return;
+    }
+  
     try {
       const headers = {
         headers: {
@@ -102,62 +172,130 @@ const ECommerce: React.FC = () => {
         },
       };
   
-      await api.delete(`/pags2/${id}`, headers);
+      await api.delete(`/financas/${id}`, headers);
+  
+      setTransactions(prevTransactions =>
+        prevTransactions.filter(transaction => transaction.id !== id) // Atualize para usar `id`
+      );
   
       console.log('Transação excluída com sucesso:', id);
     } catch (error) {
       console.error('Erro ao excluir transação:', error);
     }
   };
+
   
-
-  const handleAddTransaction = async (event: React.FormEvent<HTMLFormElement>) => {
-    try {
-      event.preventDefault();
-      const data = new FormData(event.target as HTMLFormElement);
-      const headers = {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-      };
-      const month = selectedModalMonth;
-      await api.post('/pags2', { ...Object.fromEntries(data), userId, month }, headers);
-      console.log('Nova transação adicionada:', data);
-      const newTransaction: Transaction = {
-        description: data.get("description") as string,
-        amount: Number(data.get("amount")),
-        date: new Date(data.get("date") as string), // Change this line to convert date to Date object
-      };
-      setTransactions(prevTransactions => [...prevTransactions, newTransaction]);
-      reset();
-      handleCloseModal();
-    } catch (error) {
-      console.error('Erro ao adicionar transação:', error);
-    }
-  };
-
   const handleOpenModal = () => { 
+    setSelectedDate(new Date()); // Configura a data atual
     setShowModal(true);
     setTransactionType("Receita"); 
   };
-
+  
   const handleOpenExpenseModal = () => { 
+    setSelectedDate(new Date()); // Configura a data atual
     setShowExpenseModal(true);
     setTransactionType("Despesa");
   };
 
   const handleCloseModal = () => {
     setShowModal(false);
-    setShowExpenseModal(false); 
+    setShowExpenseModal(false);
+    setShowNewCategoryInput(false); // Resetar o estado do input de nova categoria
   };
 
+  const defaultCategories = ["Alimentação", "Transporte", "Educação", "Saúde", "Salário"];
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const headers = {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+        };
+        const response = await api.get('/category', headers);
+        console.log('Categorias recebidas:', response.data);
+
+        if (Array.isArray(response.data)) {
+          const allCategories = [...defaultCategories, ...response.data];
+          setCategories(allCategories);
+          console.log('Estado categories atualizado:', allCategories);
+        } else {
+          console.error('A resposta da API não é uma lista de categorias.');
+        }
+      } catch (error) {
+        console.error('Erro ao buscar categorias:', error);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+  const handleUpdateTransaction = async (id: string, data: any) => {
+    try {
+      const userId = localStorage.getItem('userId');
+      if (!userId) {
+        console.error('Erro: userId não definido.');
+        return;
+      }
+  
+      const headers = {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      };
+  
+      const amount = transactionType === "Receita"
+        ? parseFloat(data.amount)
+        : -parseFloat(data.amount);
+  
+      const transactionData = {
+        ...data,
+        userId,
+        amount,
+        category: data.category,
+        month: data.month,
+        year: data.year,
+      };
+  
+      await api.put(`/financas/${id}`, transactionData, headers);
+      console.log('Transação atualizada:', transactionData);
+  
+      setTransactions(prevTransactions => 
+        prevTransactions.map(transaction => 
+          transaction.id === id ? { ...transaction, ...transactionData } : transaction
+        )
+      );
+  
+      handleCloseModal();
+    } catch (error) {
+      console.error('Erro ao atualizar transação:', error);
+    }
+  };
+
+  const handleEditTransaction = async (id: string) => {
+    const transactionToEdit = transactions.find(transaction => transaction.id === id);
+  
+    if (transactionToEdit) {
+      setValue('description', transactionToEdit.description);
+      setValue('amount', transactionToEdit.amount);
+      setValue('month', transactionToEdit.month);
+      setValue('year', transactionToEdit.year);
+      setValue('category', transactionToEdit.category);
+      setTransactionType(transactionToEdit.amount > 0 ? 'Receita' : 'Despesa');
+  
+      setShowModal(true);
+    }
+  };
+  
 
   return (
     <DefaultLayout>
       <div className="flex flex-col md:flex-row gap-4">
         <div className="w-full md:w-1/2">
-          <div className="card bg-white dark:bg-gray-800 rounded-lg p-4">
+          <div className="card bg-white dark:bg-gray-800 rounded-lg p-4 shadow-md">
             <h3 className="text-lg font-semibold">Entradas</h3>
             <p id="incomeDisplay" className="text-xl font-bold text-green-500">
               $ {incomeTotal.toFixed(2)}
@@ -165,195 +303,265 @@ const ECommerce: React.FC = () => {
           </div>
         </div>
         <div className="w-full md:w-1/2">
-          <div className="card bg-white dark:bg-gray-800 rounded-lg p-4">
+          <div className="card bg-white dark:bg-gray-800 rounded-lg p-4 shadow-md">
             <h3 className="text-lg font-semibold">Saídas</h3>
             <p id="expenseDisplay" className="text-xl font-bold text-red-500">$ {expenseTotal.toFixed(2)}</p>
           </div>
         </div>
-      </div>
-      <div className="w-full mt-4">
-        <div className="card bg-white dark:bg-gray-800 rounded-lg p-4">
-          <h3 className="text-lg font-semibold">Total</h3>
-          <p id="totalDisplay" className="text-xl font-bold">$ {(incomeTotal - expenseTotal).toFixed(2)}</p>
+        <div className="w-full md:w-1/3">
+          <div className="card bg-white dark:bg-gray-800 rounded-lg p-4 shadow-md">
+            <h3 className="text-lg font-semibold">Total</h3>
+            <p id="totalDisplay" className={`text-xl font-bold ${total >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+              $ {total.toFixed(2)}
+            </p>
+          </div>
         </div>
       </div>
-      <div className="mt-8">
-        <h2 className="text-2xl font-semibold text-center">Transações de  
+
+      <div className="card mt-4 bg-white dark:bg-gray-800 rounded-lg p-4 shadow-md">
+        <h3 className="text-lg font-semibold">Transações</h3>
+        <div className="mb-4 flex items-center justify-between">
+        <div className="flex items-center">
+          <label className="mr-2 font-medium">Filtrar por categoria:</label>
           <select
-            id="month"
-            name="month"
-            className="ml-2 w-30 p-1 border rounded-md"
-            value={selectedModalMonth}
-            onChange={handleMonthChange}
-          >
-            <option value="January">Janeiro</option>
-            <option value="February">Fevereiro</option>
-            <option value="March">Março</option>
-            <option value="April">Abril</option>
-            <option value="May">Maio</option>
-            <option value="June">Junho</option>
-            <option value="July">Julho</option>
-            <option value="August">Agosto</option>
-            <option value="September">Setembro</option>
-            <option value="October">Outubro</option>
-            <option value="November">Novembro</option>
-            <option value="December">Dezembro</option>
-          </select>
-        </h2>
-        {chartData.map(data => (
-          <div key={data.month} className="mt-4">
-            <table className="w-full mt-2 bg-white rounded-t-lg">
-              <thead>
-                <tr>
-                  <th className="py-2 text-center">Descrição</th>
-                  <th className="py-2 text-center">Valor</th>
-                  <th className="py-2 text-center">Mês</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-              {data.transactions.map((transaction: Transaction, index) => (
-                <tr key={index}>
-                  <td className="description text-center text-[#5100ff]">{transaction.description}</td>
-                  <td className={transaction.amount > 0 ? 'income text-center text-green-500' : 'expense text-center text-red-500'}>
-                    {transaction.amount}
-                  </td>
-                  <td className="date text-center text-[#edc307]">
-                    {transaction.month}
-                  </td> {/* Adicionando verificação de existência de transaction.date aqui */}
-                  <td>
-                  <button onClick={() => {
-                  if (transaction._id !== undefined) {
-                      handleDeleteTransaction(transaction._id); // Aqui estou passando diretamente o _id
-                  } else {
-                      console.error('ID da transação é undefined');
-                  }
-              }} className='text-red-500 font-bold'><MdDelete /></button>
-                  </td>
-                </tr>
-              ))}
-              </tbody>
-            </table>
-          </div>
-        ))}
-      </div>
-      <br />
-      <ChartTwo transactions={chartData.map(data => data.transactions).flat() || []} />
-      {showModal && (
-        <div className="modal-overlay fixed inset-0 flex items-center justify-center bg-black bg-opacity-25">
-          <div className="modal bg-white dark:bg-gray-800 rounded-lg p-4 w-[400px]">
-            <h2 className='text-center text-lg mt-0 mb-4 font-bold text-green-500'>Nova Receita</h2>
-            {transactionType === "Receita" && (
-              <form onSubmit={handleAddTransaction} className="mt-0">
-                <div className="input-group mb-4">
-                  <label htmlFor="description" className="sr-only">Descrição</label>
-                  <input type="text" id="description"  name="description" placeholder="Descrição" className="w-full p-2 border rounded-md" />
-                </div>
-                <div className="input-group mb-4">
-                  <label htmlFor="amount" className="sr-only">Valor</label>
-                  <input type="number" id="amount" name="amount" placeholder="0,00" step="0.01" className="w-full p-2 border rounded-md" />
-                </div>
-                <small className="block mb-4">Use o sinal - (negativo) para despesas e , (vírgula) para casas decimais</small>
-                <div className="input-group mb-4">
-                  <label htmlFor="month" className="sr-only">Mês</label>
-                  <select
-                    id="month"
-                    name="month"
-                    className="w-full p-2 border rounded-md"
-                    value={selectedModalMonth}
-                    onChange={handleMonthChange}
-                  >
-                    <option value="January">Janeiro</option>
-                    <option value="February">Fevereiro</option>
-                    <option value="March">Março</option>
-                    <option value="April">Abril</option>
-                    <option value="May">Maio</option>
-                    <option value="June">Junho</option>
-                    <option value="July">Julho</option>
-                    <option value="August">Agosto</option>
-                    <option value="September">Setembro</option>
-                    <option value="October">Outubro</option>
-                    <option value="November">Novembro</option>
-                    <option value="December">Dezembro</option>
-                  </select>
-                </div>
-                <div className="input-group actions">
-                  <button type="button" onClick={handleCloseModal} className="button cancel mr-2">Cancelar</button>
-                  <button type="submit" className="button">Salvar</button>
-                </div>
-              </form>
-            )}
-          </div>
+          value={selectedCategory}
+          onChange={handleCategoryChange}
+          className="p-2 rounded-md border border-gray-300"
+        >
+          <option value="">Todas</option>
+          {categories.map((category, index) => (
+            <option key={index} value={category}>
+              {category}
+            </option>
+          ))}
+        </select>
         </div>
+        <div className="flex items-center">
+          <label className="mr-2 font-medium">Mês:</label>
+          <DatePicker
+                  selected={tableDate}
+                  onChange={handleTableDateChange}
+                  dateFormat="MMMM yyyy"
+                  showMonthYearPicker
+                  showFullMonthYearPicker
+                  className="date-picker-input"
+                  calendarClassName="custom-calendar"
+                  wrapperClassName="date-picker-wrapper"
+                  popperClassName="custom-popper"
+                  disabledKeyboardNavigation
+                  placeholderText="Selecione um mês"
+          />
+        </div>
+        </div>
+        <table className="w-full text-left">
+          <thead>
+            <tr>
+              <th className="p-2 border-b">Descrição</th>
+              <th className="p-2 border-b">Valor</th>
+              <th className="p-2 border-b">Mês</th>
+              <th className="p-2 border-b">Categoria</th>
+              <th className="p-2 border-b">Ação</th>
+            </tr>
+          </thead>
+          <tbody>
+            {transactions.map((transaction, index) => (
+                <tr
+                 key={index}
+                 className={`${
+                   transaction.amount < 0 ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'
+                 }`}
+               >
+                <td className="p-2 border-b">{transaction.description}</td>
+                <td className="p-2 border-b">{transaction.amount.toFixed(2)}</td>
+                <td className="p-2 border-b">{monthMapping[transaction.month] || transaction.month}</td> {/* Convertendo mês para português */}
+                <td className="p-2 border-b">{transaction.category}</td>
+                <td className="p-2 border-b">
+                  <button
+                    className="hover:text-black mr-2"
+                    onClick={() => handleEditTransaction(transaction.id)} // Ação de editar
+                  >
+                    <FaEdit /> 
+                  </button>
+                  <button
+                    className="hover:text-black"
+                    onClick={() => handleDeleteTransaction(transaction.id)} // Atualize para usar `id`
+                  >
+                    <MdDelete />
+                  </button>
+                  
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="fixed bottom-16 right-8 flex space-x-4">
+        <button onClick={handleOpenExpenseModal} className="fixed bottom-16 left-1/2 transform -translate-x-1/2 bg-red-500 text-white py-2 px-4 rounded-full shadow-md hover:bg-red-600">
+          Adicionar Despesa
+        </button>
+
+        <button onClick={handleOpenModal} className="fixed bottom-16 left-1/2 transform translate-x-1/2 bg-green-500 text-white py-2 px-4 rounded-full shadow-md hover:bg-green-600">
+          Adicionar Receita
+        </button>
+      </div>
+
+      {showModal && (
+        <TransactionModal
+          title="Adicionar Receita"
+          onClose={handleCloseModal}
+          onSubmit={handleSubmit(handleAddTransaction)}
+          register={register}
+          errors={errors}
+          transactionType="Receita"
+          setValue={setValue}
+          showNewCategoryInput={showNewCategoryInput}
+          categories={categories}
+          monthMapping={monthMapping2} // Passe o monthMapping para o modal
+          selectedDate={selectedDate} // Pass selectedDate
+          setSelectedDate={setSelectedDate} // Pass setSelectedDate
+        />
       )}
 
       {showExpenseModal && (
-        <div className="modal-overlay fixed inset-0 flex items-center justify-center bg-black bg-opacity-25">
-          <div className="modal bg-white dark:bg-gray-800 rounded-lg p-4">
-            <div className="flex justify-center mb-4">
-              <button onClick={() => setTransactionType("Despesa")} className="button text-red-500 font-bold">Despesa</button>
-            </div>
-            {transactionType === "Despesa" && (
-              <form onSubmit={handleAddTransaction} className="mt-0">
-                <div className="input-group mb-4">
-                  <label htmlFor="description" className="sr-only">Descrição</label>
-                  <input type="text" id="description" name="description" placeholder="Descrição" className="w-full p-2 border rounded-md" />
-                </div>
-                <div className="input-group mb-4">
-                  <label htmlFor="amount" className="sr-only">Valor</label>
-                  <input type="number" id="amount" name="amount" placeholder="0,00" step="0.01" className="w-full p-2 border rounded-md" />
-                </div>
-                <small className="block mb-4">Use o sinal - (negativo) para despesas e , (vírgula) para casas decimais</small>
-                <div className="input-group mb-4">
-                  <label htmlFor="month" className="sr-only">Mês</label>
-                  <select
-                    id="month"
-                    name="month"
-                    className="w-full p-2 border rounded-md"
-                    value={selectedModalMonth}
-                    onChange={handleMonthChange}
-                  >
-                    <option value="January">Janeiro</option>
-                    <option value="February">Fevereiro</option>
-                    <option value="March">Março</option>
-                    <option value="April">Abril</option>
-                    <option value="May">Maio</option>
-                    <option value="June">Junho</option>
-                    <option value="July">Julho</option>
-                    <option value="August">Agosto</option>
-                    <option value="September">Setembro</option>
-                    <option value="October">Outubro</option>
-                    <option value="November">Novembro</option>
-                    <option value="December">Dezembro</option>
-                  </select>
-                </div>
-                <div className="input-group actions">
-                  <button type="button" onClick={handleCloseModal} className="button cancel mr-2">Cancelar</button>
-                  <button type="submit" className="button">Salvar</button>
-                </div>
-              </form>
+        <TransactionModal
+          title="Adicionar Despesa"
+          onClose={handleCloseModal}
+          onSubmit={handleSubmit(handleAddTransaction)}
+          register={register}
+          errors={errors}
+          transactionType="Despesa"
+          setValue={setValue}
+          showNewCategoryInput={showNewCategoryInput}
+          categories={categories}
+          monthMapping={monthMapping2} // Passe o monthMapping para o modal
+          selectedDate={selectedDate} // Pass selectedDate
+          setSelectedDate={setSelectedDate} // Pass setSelectedDate
+        />
+      )}
+    </DefaultLayout>
+  );
+};
+
+interface TransactionModalProps {
+  title: string;
+  onClose: () => void;
+  onSubmit: (event: React.FormEvent) => void;
+  register: any;
+  errors: any;
+  transactionType: string;
+  setValue: (name: string, value: any) => void;
+  categories: string[];
+  selectedDate: Date | null;
+  setSelectedDate: (date: Date | null) => void;
+}
+
+const TransactionModal: React.FC<TransactionModalProps> = ({
+  title,
+  onClose,
+  onSubmit,
+  register,
+  errors,
+  setValue,
+  categories,
+  selectedDate,
+  setSelectedDate
+}) => {
+  // Estado para controlar a exibição do input de nova categoria
+  const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
+
+  useEffect(() => {
+    if (selectedDate) {
+      setValue("month", format(selectedDate, "MMMM")); // Define o mês
+      setValue("year", format(selectedDate, "yyyy"));   // Define o ano
+    }
+  }, [selectedDate, setValue]);
+
+  const handleDateChange = (date: Date | null) => {
+    if (date) {
+      setValue("month", format(date, "MMMM")); // Define o mês
+      setValue("year", format(date, "yyyy"));   // Define o ano
+    }
+    setSelectedDate(date); // Atualiza selectedDate
+  };
+
+  const handleCategoryChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedCategory(event.target.value);
+  }
+
+  return (
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg w-80">
+        <h2 className="text-xl font-semibold mb-4">{title}</h2>
+        <form onSubmit={onSubmit}>
+          <div className="mb-4">
+            <label className="block mb-1 font-medium">Descrição</label>
+            <input
+              type="text"
+              {...register("description", { required: true })}
+              className="w-full p-2 rounded-md border border-gray-300"
+            />
+            {errors.description && <span className="text-red-500">Campo obrigatório</span>}
+          </div>
+          <div className="mb-4">
+            <label className="block mb-1 font-medium">Valor</label>
+            <input
+              type="number"
+              step="0.01"
+              {...register("amount", { required: true })}
+              className="w-full p-2 rounded-md border border-gray-300"
+            />
+            {errors.amount && <span className="text-red-500">Campo obrigatório</span>}
+          </div>
+          <div className="mb-4">
+            <label className="block mb-1 font-medium">Data</label>
+            <DatePicker
+              selected={selectedDate}
+              onChange={handleDateChange}
+              dateFormat="MMMM yyyy"
+              showMonthYearPicker
+              showFullMonthYearPicker
+              className="date-picker-input"
+              calendarClassName="custom-calendar"
+              wrapperClassName="date-picker-wrapper"
+              popperClassName="custom-popper"
+              disabledKeyboardNavigation
+              placeholderText="Selecione um mês"
+            />
+            {errors.month && <span className="text-red-500">Campo obrigatório</span>}
+          </div>
+          <div className="mb-4">
+            <label className="block mb-1 font-medium">Categoria</label>
+            <select
+              {...register("category", { required: true })}
+              className="w-full p-2 rounded-md border border-gray-300"
+              defaultValue={register("category").value || ""}
+              onChange={handleCategoryChange} // Altere aqui
+            >
+              {categories.map((category, index) => (
+                <option key={index} value={category}>
+                  {category}
+                </option>
+              ))}
+              <option value="Outros">Outros</option>
+            </select>
+            {errors.category && <span className="text-red-500">Campo obrigatório</span>}
+            {showNewCategoryInput && (
+              <input
+                type="text"
+                placeholder="Nova categoria"
+                {...register("newCategory", { required: showNewCategoryInput })}
+                className="w-full p-2 rounded-md border border-gray-300 mt-2"
+              />
             )}
           </div>
-        </div>
-      )}
-
-      <div id="toast" className="fixed bottom-0 right-0 p-4 bg-white text-red-500">
-        <div className="img"><h1>×</h1></div>
-        <div className="description">Por favor, preencha todos os campos!</div>
+          <div className="flex justify-end">
+            <button type="button" onClick={onClose} className="mr-2 px-4 py-2 bg-red-500 text-white rounded-md hover:bg-gray-600">Cancelar</button>
+            <button type="submit" className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">Adicionar</button>
+          </div>
+        </form>
       </div>
-
-      <button onClick={handleOpenModal}>
-        <div className="float-button fixed bottom-8 right-8 bg-green-500 w-16 h-16 flex items-center justify-center rounded-full shadow-md hover:bg-green-600 cursor-pointer">
-          <img src={float} alt="Adicionar Renda" width="16px" />
-        </div>
-      </button>
-
-      <button onClick={handleOpenExpenseModal}>
-        <div className="float-button fixed bottom-8 right-24 bg-red-500 w-16 h-16 flex items-center justify-center rounded-full shadow-md hover:bg-red-600 cursor-pointer">
-          <FaMinus color="white" size={16} />
-        </div>
-      </button>
-    </DefaultLayout>
+    </div>
   );
 };
 

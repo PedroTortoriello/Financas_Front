@@ -1,9 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import SidebarLinkGroup from './SidebarLinkGroup';
-import Logo from '../../images/Logo2.png'
-import { FaMoneyBillWave } from "react-icons/fa";
-
+import { FaMoneyBillWave, FaChartPie, FaCogs, FaHome, FaBars, FaCreditCard } from "react-icons/fa";
+import Logo from './Logo.png'; // Substitua pelo caminho correto para a imagem
 interface SidebarProps {
   sidebarOpen: boolean;
   setSidebarOpen: (arg: boolean) => void;
@@ -59,95 +57,84 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
   return (
     <aside
       ref={sidebar}
-      className={`absolute left-0 top-0 z-9999 flex h-screen w-25 flex-col overflow-y-hidden bg-[#011e36] duration-300 ease-linear dark:bg-[#011e36] lg:static lg:translate-x-0 ${
+      className={`fixed inset-y-0 left-0 z-50 flex h-screen w-64 flex-col overflow-y-hidden bg-gradient-to-b from-blue-900 to-black shadow-lg duration-300 ease-in-out dark:bg-gray-900 lg:static lg:translate-x-0 ${
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
       }`}
     >
-      {/* <!-- SIDEBAR HEADER --> */}
-      <div className="flex items-center justify-between gap-2 px-6 py-5.5 lg:py-6.5 border border-white">  
-          <img src={Logo}/>
+      {/* SIDEBAR HEADER */}
+      <div className="flex items-center justify-between px-4 py-4">
+      <div style={{ display: "flex", justifyContent: "center", marginBottom: "2rem" }}>
+          <img src={Logo} alt="Logo" style={{ maxWidth: "100%", height: "auto"}} />
+        </div>
+        <button
+          ref={trigger}
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          className="text-white lg:hidden"
+        >
+          <FaBars size={24} />
+        </button>
       </div>
-      {/* <!-- SIDEBAR HEADER --> */}
+      {/* SIDEBAR HEADER */}
 
-      <div className="no-scrollbar flex flex-col overflow-y-auto duration-300 ease-linear">
-        {/* <!-- Sidebar Menu --> */}
-        <nav className="mt-5 py-4 px-4 lg:mt-9 lg:px-6">
-          {/* <!-- Menu Group --> */}
+      <div className="no-scrollbar flex flex-col overflow-y-auto mt-5">
+        {/* Sidebar Menu */}
+        <nav className="mt-5 px-4">
+          {/* Menu Group */}
           <div>
-            <h3 className="mb-4 ml-4 text-sm font-semibold text-bodydark2">
-              
-            </h3>
-
-            <ul className="mb-6 flex flex-col gap-1.5">
-              {/* <!-- Menu Item Dashboard --> */}
-              <SidebarLinkGroup
-                activeCondition={
-                  pathname === '/' || pathname.includes('dashboard')
-                }
-              >
-                {(handleClick, open) => {
-                  return (
-                    <React.Fragment>
-                      <NavLink
-                        to="#"
-                        className={`group relative flex items-center gap-2.5 rounded-sm px-4 py-2 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${
-                          (pathname === '/' ||
-                            pathname.includes('dashboard')) &&
-                          'bg-graydark dark:bg-meta-4'
-                        }`}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          sidebarExpanded
-                            ? handleClick()
-                            : setSidebarExpanded(true);
-                        }}
-                      >
-                        <FaMoneyBillWave className="w-[50px] h-[50px] text-[#04D282]" />
-                      </NavLink>
-                      {/* <!-- Dropdown Menu Start --> */}
-                      <div
-                        className={`translate transform overflow-hidden ${
-                          !open && 'hidden'
-                        }`}
-                      >
-                        <ul className="mt-4 mb-5.5 flex flex-col gap-2.5 pl-6">
-                          <li>
-                            <NavLink
-                              to="/"
-                              className={({ isActive }) =>
-                                'group relative flex items-center gap-2.5 rounded-md px-4 font-medium text-bodydark2 duration-300 ease-in-out hover:text-white ' +
-                                (isActive && '!text-white')
-                              }
-                            >
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="50px"
-                                height="15"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              >
-                                <path d="M12 2a10 10 0 0 1 10 10c0 5.523-4.477 10-10 10s-10-4.477-10-10a10 10 0 0 1 10-10zm-2.75 5h5.5c.69 0 1.25.56 1.25 1.25v1.875c0 .69-.56 1.25-1.25 1.25h-1.75v1h1.75c.69 0 1.25.56 1.25 1.25v1.875c0 .69-.56 1.25-1.25 1.25h-5.5c-.69 0-1.25-.56-1.25-1.25V11c0-.69.56-1.25 1.25-1.25h1.75v-1h-1.75c-.69 0-1.25-.56-1.25-1.25V8c0-.69.56-1.25 1.25-1.25z" />
-                              </svg>
-                            </NavLink>
-                          </li>
-                        </ul>
-                      </div>
-                      {/* <!-- Dropdown Menu End --> */}
-                    </React.Fragment>
-                  );
-                }}
-              </SidebarLinkGroup>
-              {/* <!-- Menu Item Dashboard --> */}
-
+            <ul className="flex flex-col gap-6">
+              {/* Menu Item Dashboard */}
+              <li>
+                <NavLink
+                  to="/Principal/page"
+                  className={({ isActive }) =>
+                    'group flex items-center gap-4 rounded-md px-4 py-2 text-sm font-medium text-white duration-300 ease-in-out hover:bg-blue-700 ' +
+                    (isActive && 'bg-blue-700')
+                  }
+                >
+                  <FaHome size={20} />
+                  {sidebarExpanded && <span>Dashboard</span>}
+                </NavLink>
+              </li>
+              <li>
+                <NavLink
+                  to="/Dashboard/ECommerce"
+                  className={({ isActive }) =>
+                    'group flex items-center gap-4 rounded-md px-4 py-2 text-sm font-medium text-white duration-300 ease-in-out hover:bg-blue-700 ' +
+                    (isActive && 'bg-blue-700')
+                  }
+                >
+                  <FaMoneyBillWave size={20} />
+                  {sidebarExpanded && <span>Transações</span>}
+                </NavLink>
+              </li>
+              <li>
+                <NavLink
+                  to="/Investments/page"
+                  className={({ isActive }) =>
+                    'group flex items-center gap-4 rounded-md px-4 py-2 text-sm font-medium text-white duration-300 ease-in-out hover:bg-blue-700 ' +
+                    (isActive && 'bg-blue-700')
+                  }
+                >
+                  <FaChartPie size={20} />
+                  {sidebarExpanded && <span>Investimentos</span>}
+                </NavLink>
+              </li>
+              <li>
+                <NavLink
+                  to="/CreditCard/page"
+                  className={({ isActive }) =>
+                    'group flex items-center gap-4 rounded-md px-4 py-2 text-sm font-medium text-white duration-300 ease-in-out hover:bg-blue-700 ' +
+                    (isActive && 'bg-blue-700')
+                  }
+                >
+                  <FaCreditCard size={20} />
+                  {sidebarExpanded && <span>Cartões</span>}
+                </NavLink>
+              </li>
             </ul>
           </div>
-
         </nav>
-        {/* <!-- Sidebar Menu --> */}
+        {/* Sidebar Menu */}
       </div>
     </aside>
   );

@@ -1,16 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { MdMailOutline, MdPersonOutline } from "react-icons/md";
 import { useForm } from 'react-hook-form';
-import { AuthUserFormSchema } from './schemas';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useNavigate } from 'react-router-dom';
 import api from './api';
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import Button from './Button';
-import Image from './Image';
-import './StyleLogin.css';
-import { Link, useNavigate } from 'react-router-dom';
-import Logo from './Logo.png';
-import { useMediaQuery } from 'react-responsive';
+import Logo from './Logo.png'; // Substitua pelo caminho correto para a imagem
+
+const AuthUserFormSchema = z.object({
+  email: z.string().email({ message: "E-mail inválido" }),
+  password: z.string().min(6, { message: "A senha deve ter no mínimo 6 caracteres" }),
+});
 
 type AuthUserFormData = z.infer<typeof AuthUserFormSchema>;
 
@@ -18,125 +17,144 @@ const SignIn: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [loggedInEmail, setLoggedInEmail] = useState("");
-  const navigate = useNavigate(); // Use React Router's useHistory hook
+  const navigate = useNavigate();
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-    setValue, // Add setValue function from useForm
+    setValue,
   } = useForm<AuthUserFormData>({
     resolver: zodResolver(AuthUserFormSchema),
   });
 
   useEffect(() => {
-    // Set value for email field when loggedInEmail changes
     setValue('email', loggedInEmail);
   }, [loggedInEmail, setValue]);
 
   async function AuthUser(data: AuthUserFormData) {
     setLoading(true);
-
+  
     try {
       const response = await api.post("/autenticacao", data);
-      localStorage.setItem("token", response.data.token);
-      localStorage.setItem("authenticate", response.data.authenticate);
-
-      const authString = localStorage.getItem("authenticate");
-
-      if (authString !== null) {
-        const auth = JSON.parse(authString);
-
-        if (auth === false) {
-          setError("Usuário ou senha incorreta!");
-          setTimeout(() => setError(""), 2100);
-        } else {
-          setLoggedInEmail(data.email);
-          localStorage.setItem("userEmail", data.email); // Store the email in localStorage
-          console.log("loggedInEmail antes de navegar:", data.email); // Adicione esta linha
-          navigate("/Dashboard/ECommerce", { state: { loggedInEmail: data.email } });
-        }
-        
-      } else {
-        setError("Erro ao obter informações de autenticação.");
+  
+      // Certifique-se de que o `response.data` contenha o campo `_id`
+      const { token, authenticate, _id } = response.data;
+  
+      localStorage.setItem("token", token);
+      localStorage.setItem("authenticate", JSON.stringify(authenticate));
+  
+      if (authenticate === false) {
+        setError("Usuário ou senha incorreta!");
         setTimeout(() => setError(""), 2100);
+      } else {
+        setLoggedInEmail(data.email);
+        localStorage.setItem("userEmail", data.email);
+        navigate("/Dashboard/ECommerce", { state: { loggedInEmail: data.email } });
       }
     } catch (error) {
-      setError(error.message);
+      setError("Erro ao autenticar. Tente novamente.");
       setTimeout(() => setError(""), 2100);
     } finally {
       setLoading(false);
     }
-  }  
-
-  const isMobile = useMediaQuery({ maxWidth: 768 });
+  }
+  
 
   return (
-    <div className="login-page">
-      <div className="flex justify-center items-center bg-[#011e36]">
-        <div className='boxLeft'>
-          <form onSubmit={handleSubmit(AuthUser)}>
-            <div className="boxRight md:hidden w-50 h-10 items-center justify-center ">
-              {!isMobile && <Image imageLink={Logo} />}
-            </div>
-
-            <div className="input-box">
-              <label htmlFor="email">Email<i>*</i></label>
-              <MdMailOutline id="icon" className="material-icons" />
-              <input
-                className="input"
-                {...register("email")}
-                id="email"
-                type="email"
-                placeholder="Digite seu email"
-              />
-            </div>
-
-            <div className="input-box">
-              <label htmlFor="pswd">Senha<i>*</i></label>
-              <MdPersonOutline id="icon" className="material-icons" />
-              <input
-                className="input"
-                {...register("password")}
-                id="pswd"
-                type="password"
-                placeholder='Digite sua Senha'
-              />
-            </div>
-
-            {error && <p className="error-message">{error}</p>}
-
-            <div className="button-container">
-              {loggedInEmail ? ( // Render Link if loggedInEmail exists
-                <Link to="/Table/Table">
-                  <Button
-                    name='button'
-                    id='button'
-                    type='button' // Change type to button
-                    content="Login"
-                    disabled={loading}
-                  />
-                </Link>
-              ) : (
-                <Button
-                  name='button'
-                  id='button'
-                  type='submit' 
-                  content={loading ? "Aguarde..." : "Login"}
-                  disabled={loading}
-                />
-              )}
-            </div>
-
-            <div className="signup-link">
-              <p>Ainda não possui conta? <Link to="/auth/signup" className='text-[#011e36] font-bold'>Cadastre-se</Link></p>
-            </div>
-          </form>
+    <div
+      className="login-page"
+      style={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        height: "100vh",
+        background: "linear-gradient(135deg, #1f2a3c, #0b0e11)",
+        fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+        color: "#fff"
+      }}
+    >
+      <div
+        className="login-form"
+        style={{
+          width: "100%",
+          maxWidth: "400px",
+          padding: "2rem",
+          backgroundColor: "#2a2f3a",
+          borderRadius: "10px",
+          boxShadow: "0 10px 20px rgba(0, 0, 0, 0.2)",
+          animation: "fadeIn 0.5s ease-in-out"
+        }}
+      >
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: "2rem" }}>
+          <img src={Logo} alt="Logo" style={{ maxWidth: "60%", height: "120px" }} />
         </div>
+        <form onSubmit={handleSubmit(AuthUser)} style={{ display: "flex", flexDirection: "column" }}>
+          <div className="form-group" style={{ marginBottom: "1.5rem" }}>
+            <label htmlFor="email" style={{ color: "#A0AEC0", marginBottom: "0.5rem" }}>E-mail</label>
+            <input
+              id="email"
+              type="email"
+              {...register("email")}
+              style={{
+                width: "100%",
+                padding: "0.75rem",
+                borderRadius: "8px",
+                border: "1px solid #3a3f4a",
+                backgroundColor: "#3a3f4a",
+                color: "#fff",
+                outline: "none",
+                transition: "border-color 0.2s"
+              }}
+              onFocus={(e) => e.target.style.borderColor = "#00BFFF"}
+              onBlur={(e) => e.target.style.borderColor = "#3a3f4a"}
+            />
+            {errors.email && <p style={{ color: "#F56565", marginTop: "0.5rem" }}>{errors.email.message}</p>}
+          </div>
 
-        <div className="boxRight hidden md:block bg-[#011e36]">
-          {!isMobile && <Image imageLink={Logo} />}
-        </div>
+          <div className="form-group" style={{ marginBottom: "1.5rem" }}>
+            <label htmlFor="password" style={{ color: "#A0AEC0", marginBottom: "0.5rem" }}>Senha</label>
+            <input
+              id="password"
+              type="password"
+              {...register("password")}
+              style={{
+                width: "100%",
+                padding: "0.75rem",
+                borderRadius: "8px",
+                border: "1px solid #3a3f4a",
+                backgroundColor: "#3a3f4a",
+                color: "#fff",
+                outline: "none",
+                transition: "border-color 0.2s"
+              }}
+              onFocus={(e) => e.target.style.borderColor = "#00BFFF"}
+              onBlur={(e) => e.target.style.borderColor = "#3a3f4a"}
+            />
+            {errors.password && <p style={{ color: "#F56565", marginTop: "0.5rem" }}>{errors.password.message}</p>}
+          </div>
+
+          {error && <p style={{ color: "#F56565", marginBottom: "1.5rem", textAlign: "center" }}>{error}</p>}
+
+          <button
+            type="submit"
+            style={{
+              width: "100%",
+              padding: "0.75rem",
+              background: "linear-gradient(90deg, #00BFFF, #00A3CC)",
+              color: "white",
+              border: "none",
+              borderRadius: "8px",
+              cursor: "pointer",
+              transition: "background 0.3s"
+            }}
+            onMouseEnter={(e) => e.target.style.background = "linear-gradient(90deg, #00A3CC, #0096BB)"}
+            onMouseLeave={(e) => e.target.style.background = "linear-gradient(90deg, #00BFFF, #00A3CC)"}
+            disabled={loading}
+          >
+            {loading ? "Carregando..." : "Entrar"}
+          </button>
+        </form>
       </div>
     </div>
   );

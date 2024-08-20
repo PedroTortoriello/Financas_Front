@@ -1,5 +1,6 @@
 import axios from "axios";
 
 export default axios.create({
-  baseURL: "https://financasback2.onrender.com",
+  baseURL: "http://localhost:3000/",
+  withCredentials: true,
 });
