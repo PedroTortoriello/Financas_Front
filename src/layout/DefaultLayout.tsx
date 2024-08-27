@@ -1,33 +1,28 @@
 import React, { useState, ReactNode } from 'react';
-import Sidebar from '../components/Sidebar/index';
+import Headbar from '../components/Sidebar';
 
-const DefaultLayout: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+const DefaultLogin: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [headbarOpen, setHeadbarOpen] = useState(true);
 
   return (
     <div className="dark:bg-boxdark-2 dark:text-bodydark">
-      {/* <!-- ===== Page Wrapper Start ===== --> */}
-      <div className="flex h-screen overflow-hidden">
-        {/* <!-- ===== Sidebar Start ===== --> */}
-        <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-        {/* <!-- ===== Sidebar End ===== --> */}
 
-        {/* <!-- ===== Content Area Start ===== --> */}
-        <div className="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
+      
+      <div className="flex flex-col h-screen overflow-hidden">
+        
+        <Headbar headerOpen={headbarOpen} setHeaderOpen={setHeadbarOpen} />
 
-          {/* <!-- ===== Main Content Start ===== --> */}
+        {/* Área de conteúdo principal */}
+        <div className="flex flex-1 flex-col overflow-x-hidden mt-35"> {/* Adicionei mt-16 para compensar a altura da Headbar */}
           <main>
             <div className="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-10">
               {children}
             </div>
           </main>
-          {/* <!-- ===== Main Content End ===== --> */}
         </div>
-        {/* <!-- ===== Content Area End ===== --> */}
       </div>
-      {/* <!-- ===== Page Wrapper End ===== --> */}
     </div>
   );
 };
 
-export default DefaultLayout;
+export default DefaultLogin;

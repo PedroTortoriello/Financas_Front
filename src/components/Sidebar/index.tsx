@@ -1,143 +1,93 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { FaMoneyBillWave, FaChartPie, FaCogs, FaHome, FaBars, FaCreditCard } from "react-icons/fa";
-import Logo from './Logo.png'; // Substitua pelo caminho correto para a imagem
-interface SidebarProps {
-  sidebarOpen: boolean;
-  setSidebarOpen: (arg: boolean) => void;
+import { FaMoneyBillWave, FaChartPie, FaCreditCard, FaHome, FaBars } from "react-icons/fa";
+import { FiChevronDown } from 'react-icons/fi';
+import Logo from './Logo.png';
+import api from '../../pages/Authentication/api';
+import { CiLogout } from "react-icons/ci";
+import { CgProfile } from "react-icons/cg";
+
+interface HeaderProps {
+  headerOpen: boolean;
+  setHeaderOpen: (arg: boolean) => void;
 }
 
-const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
+const Header = ({ headerOpen, setHeaderOpen }: HeaderProps) => {
   const location = useLocation();
   const { pathname } = location;
 
-  const trigger = useRef<any>(null);
-  const sidebar = useRef<any>(null);
+  const header = useRef<any>(null);
 
-  const storedSidebarExpanded = localStorage.getItem('sidebar-expanded');
-  const [sidebarExpanded, setSidebarExpanded] = useState(
-    storedSidebarExpanded === null ? false : storedSidebarExpanded === 'true'
-  );
+  const [isAuthorized, setIsAuthorized] = useState(false);
 
-  // close on click outside
   useEffect(() => {
-    const clickHandler = ({ target }: MouseEvent) => {
-      if (!sidebar.current || !trigger.current) return;
-      if (
-        !sidebarOpen ||
-        sidebar.current.contains(target) ||
-        trigger.current.contains(target)
-      )
-        return;
-      setSidebarOpen(false);
+    const checkAuthorization = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          setIsAuthorized(false);
+          return;
+        }
+
+        const headers = {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        };
+
+        const response = await api.post('/authorizedUsers', {}, headers);
+        setIsAuthorized(response.data.isAuth);
+      } catch (error) {
+        console.error('Erro ao verificar autorização:', error);
+        setIsAuthorized(false);
+      }
     };
-    document.addEventListener('click', clickHandler);
-    return () => document.removeEventListener('click', clickHandler);
-  });
 
-  // close if the esc key is pressed
-  useEffect(() => {
-    const keyHandler = ({ keyCode }: KeyboardEvent) => {
-      if (!sidebarOpen || keyCode !== 27) return;
-      setSidebarOpen(false);
-    };
-    document.addEventListener('keydown', keyHandler);
-    return () => document.removeEventListener('keydown', keyHandler);
-  });
+    checkAuthorization();
+  }, [pathname]);
 
-  useEffect(() => {
-    localStorage.setItem('sidebar-expanded', sidebarExpanded.toString());
-    if (sidebarExpanded) {
-      document.querySelector('body')?.classList.add('sidebar-expanded');
-    } else {
-      document.querySelector('body')?.classList.remove('sidebar-expanded');
-    }
-  }, [sidebarExpanded]);
+  const handleMenuToggle = () => {
+    setHeaderOpen(!headerOpen);
+  };
 
   return (
-    <aside
-      ref={sidebar}
-      className={`fixed inset-y-0 left-0 z-50 flex h-screen w-64 flex-col overflow-y-hidden bg-gradient-to-b from-blue-900 to-black shadow-lg duration-300 ease-in-out dark:bg-gray-900 lg:static lg:translate-x-0 ${
-        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      }`}
+    <header
+      ref={header}
+      className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between bg-blue-900 text-white shadow-lg px-6 py-2"
     >
-      {/* SIDEBAR HEADER */}
-      <div className="flex items-center justify-between px-4 py-4">
-      <div style={{ display: "flex", justifyContent: "center", marginBottom: "2rem" }}>
-          <img src={Logo} alt="Logo" style={{ maxWidth: "100%", height: "auto"}} />
-        </div>
-        <button
-          ref={trigger}
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="text-white lg:hidden"
-        >
-          <FaBars size={24} />
-        </button>
+      {/* Logotipo e botão do menu */}
+      <div className="flex items-center">
+        <img src={Logo} alt="Logo" className="w-24 h-auto mr-4" />
       </div>
-      {/* SIDEBAR HEADER */}
 
-      <div className="no-scrollbar flex flex-col overflow-y-auto mt-5">
-        {/* Sidebar Menu */}
-        <nav className="mt-5 px-4">
-          {/* Menu Group */}
-          <div>
-            <ul className="flex flex-col gap-6">
-              {/* Menu Item Dashboard */}
-              <li>
-                <NavLink
-                  to="/Principal/page"
-                  className={({ isActive }) =>
-                    'group flex items-center gap-4 rounded-md px-4 py-2 text-sm font-medium text-white duration-300 ease-in-out hover:bg-blue-700 ' +
-                    (isActive && 'bg-blue-700')
-                  }
-                >
-                  <FaHome size={20} />
-                  {sidebarExpanded && <span>Dashboard</span>}
-                </NavLink>
-              </li>
-              <li>
-                <NavLink
-                  to="/Dashboard/ECommerce"
-                  className={({ isActive }) =>
-                    'group flex items-center gap-4 rounded-md px-4 py-2 text-sm font-medium text-white duration-300 ease-in-out hover:bg-blue-700 ' +
-                    (isActive && 'bg-blue-700')
-                  }
-                >
-                  <FaMoneyBillWave size={20} />
-                  {sidebarExpanded && <span>Transações</span>}
-                </NavLink>
-              </li>
-              <li>
-                <NavLink
-                  to="/Investments/page"
-                  className={({ isActive }) =>
-                    'group flex items-center gap-4 rounded-md px-4 py-2 text-sm font-medium text-white duration-300 ease-in-out hover:bg-blue-700 ' +
-                    (isActive && 'bg-blue-700')
-                  }
-                >
-                  <FaChartPie size={20} />
-                  {sidebarExpanded && <span>Investimentos</span>}
-                </NavLink>
-              </li>
-              <li>
-                <NavLink
-                  to="/CreditCard/page"
-                  className={({ isActive }) =>
-                    'group flex items-center gap-4 rounded-md px-4 py-2 text-sm font-medium text-white duration-300 ease-in-out hover:bg-blue-700 ' +
-                    (isActive && 'bg-blue-700')
-                  }
-                >
-                  <FaCreditCard size={20} />
-                  {sidebarExpanded && <span>Cartões</span>}
-                </NavLink>
-              </li>
-            </ul>
+      <nav className={`flex-grow flex justify-center items-center space-x-8 ${headerOpen ? '' : 'hidden'} lg:flex`}>
+        <div className="flex space-x-4 mr-5 ">
+          {/* Grupo Menu */}
+          <div className="relative group ">
+            <div className="flex mr-10 items-center text-sm font-medium cursor-pointer hover:text-gray-300">
+              Menu <FiChevronDown className="ml-1" />
+            </div>
+            <div className="absolute left-0 mt-2 w-48 bg-white border border-gray-300 rounded-md shadow-lg opacity-0 group-hover:opacity-100 transform scale-95 group-hover:scale-100 transition-all duration-300 ease-out">
+              <NavLink to="/Dashboard/ECommerce" className="hover:bg-blue-900/20 block px-4 py-2 text-sm text-blue-900 hover:bg-gray-100 hover:text-blue-900 transition-colors duration-150">Transações</NavLink>
+              <NavLink to="/Principal/page" className="hover:bg-blue-900/20 block px-4 py-2 text-sm text-blue-900 hover:bg-gray-100 hover:text-blue-900 transition-colors duration-150">Dashboard</NavLink>
+            </div>
+          </div>
+
+          {/* Grupo Vendas */}
+          <div className="relative group ">
+            <div className="flex mr-10 items-center text-sm font-medium cursor-pointer hover:text-gray-300">
+              Vendas <FiChevronDown className="ml-1" />
+            </div>
+            <div className="absolute left-0 mt-2 w-48 bg-white border border-gray-300 rounded-md shadow-lg opacity-0 group-hover:opacity-100 transform scale-95 group-hover:scale-100 transition-all duration-300 ease-out">
+              <NavLink to="/Investments/page" className="hover:bg-blue-900/20 block px-4 py-2 text-sm text-blue-900 hover:bg-gray-100 hover:text-blue-900 transition-colors duration-150">Investimentos</NavLink>
+              <NavLink to="/CreditCard/page" className="hover:bg-blue-900/20 block px-4 py-2 text-sm text-blue-900 hover:bg-gray-100 hover:text-blue-900 transition-colors duration-150">Cartões</NavLink>
+            </div>
+          </div>
           </div>
         </nav>
-        {/* Sidebar Menu */}
-      </div>
-    </aside>
+    </header>
   );
 };
 
-export default Sidebar;
+export default Header;

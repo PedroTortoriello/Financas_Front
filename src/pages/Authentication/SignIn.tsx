@@ -155,6 +155,28 @@ const SignIn: React.FC = () => {
             {loading ? "Carregando..." : "Entrar"}
           </button>
         </form>
+        <div style={{ marginTop: "1rem", textAlign: "center" }}>
+  <p style={{ color: "#A0AEC0", marginBottom: "0.5rem" }}>
+    Ainda não tem uma conta?
+  </p>
+  <button
+    onClick={() => navigate('/auth/signup')}
+    style={{
+      padding: "0.5rem 1rem",
+      background: "linear-gradient(90deg, #00BFFF, #00A3CC)",
+      color: "white",
+      border: "none",
+      borderRadius: "8px",
+      cursor: "pointer",
+      transition: "background 0.3s",
+      fontSize: "0.875rem",
+    }}
+    onMouseEnter={(e) => e.target.style.background = "linear-gradient(90deg, #00A3CC, #0096BB)"}
+    onMouseLeave={(e) => e.target.style.background = "linear-gradient(90deg, #00BFFF, #00A3CC)"}
+  >
+    Criar Conta
+  </button>
+</div>
       </div>
     </div>
   );

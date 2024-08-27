@@ -7,7 +7,7 @@ import api from './api';
 import Logo from './Logo.png'; // Substitua pelo caminho correto para a imagem
 
 const RegisterUserFormSchema = z.object({
-  username: z.string().min(3, { message: "Nome de usuário deve ter no mínimo 3 caracteres" }),
+  userName: z.string().min(3, { message: "Nome de usuário deve ter no mínimo 3 caracteres" }),
   email: z.string().email({ message: "E-mail inválido" }),
   password: z.string().min(6, { message: "A senha deve ter no mínimo 6 caracteres" }),
 });
@@ -41,7 +41,7 @@ const SignUp: React.FC = () => {
       const response = await api.post("/newUsers", {
         email: data.email,
         password: data.password,
-        userName: data.username, // Mapeia username para userName
+        userName: data.userName, // Mapeia username para userName
       }, headers);
 
       const { userId } = response.data;
@@ -91,7 +91,7 @@ const SignUp: React.FC = () => {
             <input
               id="username"
               type="text"
-              {...register("username")}
+              {...register("userName")}
               style={{
                 width: "100%",
                 padding: "0.75rem",
