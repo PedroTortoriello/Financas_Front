@@ -11,9 +11,8 @@ const DefaultLogin: React.FC<{ children: ReactNode }> = ({ children }) => {
       <div className="flex flex-col h-screen overflow-hidden">
         
         <Headbar headerOpen={headbarOpen} setHeaderOpen={setHeadbarOpen} />
-
-        {/* Área de conteúdo principal */}
-        <div className="flex flex-1 flex-col overflow-x-hidden mt-35"> {/* Adicionei mt-16 para compensar a altura da Headbar */}
+        
+        <div className="flex flex-1 flex-col overflow-x-hidden mt-20"> {/* Adicionei mt-16 para compensar a altura da Headbar */}
           <main>
             <div className="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-10">
               {children}

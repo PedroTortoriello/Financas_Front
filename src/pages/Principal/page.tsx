@@ -13,19 +13,19 @@ const ComparisonPage: React.FC = () => {
 
   const defaultCategories = ["Alimentação", "Transporte", "Educação", "Saúde", "Salário"];
 
-  const monthMapping: { [key: string]: string } = {
-    'January': 'Jan',
-    'February': 'Feb',
-    'March': 'Mar',
-    'April': 'Apr',
-    'May': 'May',
-    'June': 'Jun',
-    'July': 'Jul',
-    'August': 'Aug',
-    'September': 'Sep',
-    'October': 'Oct',
-    'November': 'Nov',
-    'December': 'Dec',
+  const monthMappingPT: { [key: string]: string } = {
+    'January': 'Janeiro',
+    'February': 'Fevereiro',
+    'March': 'Março',
+    'April': 'Abril',
+    'May': 'Maio',
+    'June': 'Junho',
+    'July': 'Julho',
+    'August': 'Agosto',
+    'September': 'Setembro',
+    'October': 'Outubro',
+    'November': 'Novembro',
+    'December': 'Dezembro',
   };
 
   useEffect(() => {
@@ -76,6 +76,14 @@ const ComparisonPage: React.FC = () => {
     fetchTransactions();
   }, []);
 
+  // Helper function to extract the numeric value from amount
+  const getAmountValue = (amount: any) => {
+    if (amount && typeof amount === 'object' && amount.$numberDecimal) {
+      return parseFloat(amount.$numberDecimal);
+    }
+    return parseFloat(amount || '0');
+  };
+
   // Filtragem para o mês atual
   const currentMonthTransactions = transactions.filter(transaction => {
     const month = transaction.month;
@@ -83,7 +91,7 @@ const ComparisonPage: React.FC = () => {
     return month === currentMonth && year === currentYear;
   });
 
-  const totalCurrentMonth = currentMonthTransactions.reduce((sum, transaction) => sum + parseFloat(transaction.amount || '0'), 0);
+  const totalCurrentMonth = currentMonthTransactions.reduce((sum, transaction) => sum + getAmountValue(transaction.amount), 0);
 
   // Cálculo dos totais dos últimos 6 meses
   const groupedTransactions: { [key: string]: number } = transactions.reduce((acc, transaction) => {
@@ -91,7 +99,7 @@ const ComparisonPage: React.FC = () => {
     const year = parseInt(transaction.year, 10); // Converter para número
     const monthYear = `${month} ${year}`;
     acc[monthYear] = acc[monthYear] || 0;
-    acc[monthYear] += parseFloat(transaction.amount || '0');
+    acc[monthYear] += getAmountValue(transaction.amount);
     return acc;
   }, {});
 
@@ -105,7 +113,7 @@ const ComparisonPage: React.FC = () => {
   }).slice(0, 6);
 
   const trendData = {
-    labels: sortedMonths.map(month => `${monthMapping[month.split(' ')[0]] || month.split(' ')[0]} - ${month.split(' ')[1]}`),
+    labels: sortedMonths.map(month => `${monthMappingPT[month.split(' ')[0]] || month.split(' ')[0]} - ${month.split(' ')[1]}`),
     datasets: [
       {
         label: 'Gastos Mensais',
@@ -141,7 +149,7 @@ const ComparisonPage: React.FC = () => {
     const category = transaction.category || 'Outros';
     if (filteredCategories.includes(category)) {
       acc[category] = acc[category] || 0;
-      acc[category] += parseFloat(transaction.amount || '0');
+      acc[category] += getAmountValue(transaction.amount);
     }
     return acc;
   }, {});
@@ -223,9 +231,9 @@ const ComparisonPage: React.FC = () => {
         <div className="bg-white dark:bg-gray-800 p-4 mt-6 rounded-lg shadow-md">
           <h2 className="text-xl font-semibold mb-2">Resumo</h2>
           <p>Total de Gastos no Mês Atual: R$ {Math.abs(totalCurrentMonth).toFixed(2)}</p>
-          <h3 className="text-lg font-semibold mt-4">Gastos dos Últimos 6 Meses</h3>
+          <h3 className="text-lg font-semibold mt-4">Economia dos Últimos 6 Meses</h3>
           {sortedMonths.map(month => (
-            <p key={month}>{`${monthMapping[month.split(' ')[0]] || month.split(' ')[0]} - ${month.split(' ')[1]}`}: R$ {Math.abs(groupedTransactions[month] || 0).toFixed(2)}</p>
+            <p key={month}>{`${monthMappingPT[month.split(' ')[0]] || month.split(' ')[0]} - ${month.split(' ')[1]}`}: R$ {Math.abs(groupedTransactions[month] || 0).toFixed(2)}</p>
           ))}
         </div>
         <div className="flex justify-end items-center mb-6 mt-5">

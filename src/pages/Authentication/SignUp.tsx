@@ -17,7 +17,7 @@ type RegisterUserFormData = z.infer<typeof RegisterUserFormSchema>;
 const SignUp: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
+  const navigate = useNavigate();
   const {
     register,
     handleSubmit,
@@ -48,7 +48,7 @@ const SignUp: React.FC = () => {
 
       // Agora você pode usar o userId conforme necessário
       console.log("User ID:", userId);
-
+      navigate("/auth/signin");
     } catch (error) {
       setError(error.message);
       setTimeout(() => setError(""), 2100);
