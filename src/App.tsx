@@ -9,6 +9,7 @@ import ECommerce from './pages/Dashboard/ECommerce';
 import ComparisonPage from './pages/Principal/page';
 import InvestmentManagementPage from './pages/Investments/page';
 import AddCreditCard from './pages/CreditCard/page';
+import UserProfile from './pages/Profile/page';
 
 function App() {
   const [loading, setLoading] = useState<boolean>(true);
@@ -77,6 +78,15 @@ function App() {
           }
         />
 
+        <Route
+          path="/Profile/page"
+          element={
+            <>
+              <PageTitle title="Binance X" />
+              <UserProfile />
+            </>
+          }
+        />
         <Route
           path="/auth/signin"
           element={

@@ -141,12 +141,12 @@ const Header = ({ headerOpen, setHeaderOpen }: HeaderProps) => {
           <FiChevronDown className="ml-1" />
         </div>
         <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-300 rounded-md shadow-lg opacity-0 group-hover:opacity-100 transform scale-95 group-hover:scale-100 transition-all duration-300 ease-out">
-          {/*<NavLink
-            to="/Profile"
+          <NavLink
+            to="/Profile/page"
             className="hover:bg-blue-900/20 block px-4 py-2 text-sm text-blue-900 transition-colors duration-150"
           >
             Meu Perfil
-          </NavLink>*/}
+          </NavLink>
           <button
             onClick={handleLogout}
             className="hover:bg-blue-900/20 block w-full text-left px-4 py-2 text-sm text-blue-900 transition-colors duration-150"
