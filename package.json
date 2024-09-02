@@ -1,5 +1,5 @@
 {
-  "name": "Four-Suporte",
+  "name": "BinanceX",
   "private": true,
   "version": "1.3.0",
   "type": "module",
@@ -9,8 +9,8 @@
     "preview": "vite preview"
   },
   "author": {
-    "name": "Four",
-    "email": "email@fourtec.com.br"
+    "name": "Pedro",
+    "email": "pedrooofreitas@gmail.com"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",
